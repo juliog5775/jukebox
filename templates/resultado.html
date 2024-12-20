@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Resultado</title>
+</head>
+<body>
+    <h1>Resultado de la Votación</h1>
+    {% if cancion %}
+        <h2>La canción ganadora es: {{ cancion }}</h2>
+        <p>Votos: {{ votos }}</p>
+    {% else %}
+        <p>No hay votos registrados.</p>
+    {% endif %}
+    <a href="{{ url_for('home') }}">Volver</a>
+</body>
+</html>

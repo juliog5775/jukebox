@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jukebox</title>
+    <script src="/socket.io/socket.io.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+
+        h1, h2 {
+            color: #333;
+        }
+
+        #temporizador {
+            font-size: 18px;
+            font-weight: bold;
+            color: #ff0000;
+            margin-top: 10px;
+        }
+
+        ul {
+            list-style-type: none;
+            padding: 0;
+        }
+
+        li {
+            background: #f9f9f9;
+            padding: 10px;
+            margin: 5px 0;
+            border: 1px solid #ddd;
+        }
+    </style>
+    <script>
+        const socket = io();
+
+        // Escuchar eventos de nuevas canciones
+        socket.on('nueva_cancion', function(data) {
+            const cancionesLista = document.getElementById('canciones');
+            let cancionExistente = document.getElementById(data.cancion);
+
+            if (!cancionExistente) {
+                const nuevaCancion = document.createElement('li');
+                nuevaCancion.id = data.cancion;
+                nuevaCancion.textContent = `${data.cancion} - Me gusta: ${data.votos.me_gusta} | No me gusta: ${data.votos.no_me_gusta}`;
+                cancionesLista.appendChild(nuevaCancion);
+            }
+        });
+
+        // Escuchar eventos de actualización de votos
+        socket.on('actualizar_votos', (data) => {
+            const cancionElemento = document.getElementById(data.cancion);
+            if (cancionElemento) {
+                cancionElemento.innerHTML = `${data.cancion} - Me gusta: ${data.votos.me_gusta} | No me gusta: ${data.votos.no_me_gusta}`;
+            } else {
+                console.warn(`Canción no encontrada: ${data.cancion}`);
+            }
+        });
+
+        // Función para iniciar el temporizador
+        let tiempoRestante = 10; // 10 segundos
+        let timer;
+
+        function iniciarTemporizador() {
+            timer = setInterval(function() {
+                if (tiempoRestante <= 0) {
+                    clearInterval(timer);
+                    document.getElementById('temporizador').innerText = '¡El tiempo ha terminado! Redirigiendo a resultados...';
+                    setTimeout(() => {
+                        window.location.href = '/resultado'; // Redirige a la página del resultado
+                    }, 2000); // Espera 2 segundos antes de redirigir
+                } else {
+                    document.getElementById('temporizador').innerText = `Tiempo restante: ${tiempoRestante} segundos`;
+                    tiempoRestante--;
+                }
+            }, 1000);
+        }
+
+        // Función para reiniciar las canciones
+        function resetearCanciones() {
+            fetch("/resetear", { method: "POST" })
+                .then(response => response.json())
+                .then(data => {
+                    console.log('Canciones reseteadas');
+                })
+                .catch(error => console.error('Error al resetear las canciones:', error));
+        }
+
+        // Inicializar temporizador al cargar la página
+        window.onload = function() {
+            iniciarTemporizador();
+        };
+
+        // Confirmación de conexión al servidor
+        socket.on('connect', () => {
+            console.log('Conectado al servidor de SocketIO');
+        });
+
+        socket.on('disconnect', () => {
+            console.log('Desconectado del servidor de SocketIO');
+        });
+    </script>
+</head>
+<body>
+    <h1>¡Bienvenido a Jukebox digital! 🚀</h1>
+    <h2>Eres el usuario #{{usuario_numero}}</h2>
+    <p>Elige la canción que quieras.</p>
+
+    <!-- Mostrar mensajes flash -->
+    {% with messages = get_flashed_messages() %}
+    {% if messages %}
+        <ul>
+            {% for message in messages %}
+                <li>{{ message }}</li>
+            {% endfor %}
+        </ul>
+    {% endif %}
+    {% endwith %}
+
+    <!-- Botón para ejecutar una acción -->
+    <form action="/ejecutar" method="POST">
+        <button type="submit">Seleccionar</button> 
+    </form>
+
+    <!-- Formulario de búsqueda de canción -->
+    <form action="/buscar" method="POST">
+        <label for="buscar">Buscar canción:</label>
+        <input type="text" id="buscar" name="buscar" placeholder="Buscar canción">
+        <button type="submit">Enviar</button>
+    </form>
+
+    <h2>Canciones encontradas y sus votos:</h2>
+
+    {% if canciones_votos %}
+        {% for cancion, votos in canciones_votos.items() %}
+        <div>
+            <h3>{{ cancion }}</h3>
+            <p>Me gusta: {{ votos['me_gusta'] }} | No me gusta: {{ votos['no_me_gusta'] }}</p>
+            <!-- Formulario para votar por una canción -->
+            <form action="/votar/{{ cancion }}" method="POST">
+                <button type="submit" name="voto" value="me_gusta">Me gusta</button>
+                <button type="submit" name="voto" value="no_me_gusta">No me gusta</button>
+            </form>
+        </div>
+        {% endfor %}
+    {% else %}
+        <p>No se han encontrado canciones aún.</p>
+    {% endif %}
+
+    <!-- Contenedor dinámico de canciones -->
+    <h2>Lista de canciones en tiempo real:</h2>
+    <ul id="canciones">
+        <!-- Canciones agregadas dinámicamente -->
+    </ul>
+
+    <div id="temporizador"></div>
+</body>
+</html>

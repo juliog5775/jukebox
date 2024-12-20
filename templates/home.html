@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Votación de Canciones</title>
+    <link rel="stylesheet" href="/static/estilos_home.css">
+</head>
+<body>
+    <h1>Votación de Canciones</h1>
+    <div>Usuarios Conectados: <span id="numero-usuarios">0</span></div>
+
+    <h2>Buscar Canciones</h2>
+    <form action="/buscar" method="POST">
+        <input type="text" name="buscar" placeholder="Buscar canción" required>
+        <button type="submit">Buscar</button>
+    </form>
+
+    <h3>Canciones disponibles</h3>
+    {% if canciones_votos %}
+    <ul id="canciones">
+        {% for cancion, votos in canciones_votos.items() %}
+        <li id="{{ cancion }}">
+            {{ cancion }} - Me gusta: {{ votos.me_gusta }}
+            <form action="/votar/{{ cancion}}" method ="POST">
+                <button type="submit" name="voto" value="me_gusta">Me gusta</button>
+        </form>
+        </li>
+        {% endfor %}
+    </ul>
+    {% endif %}
+
+    <h3>Canciones disponibles en Kodi</h3>
+    {% if canciones_kodi %}
+    <ul id="canciones_kodi">
+        {% for cancion  in canciones_kodi %}
+        <li id="{{ cancion[1] }}">
+            {{ cancion[1] }} -  {{ cancion[2] }}
+            {{cancion[1]}} - Me gusta:
+            <form action="/votar_k/{{ cancion[0]}}" method ="POST">
+                <button type="submit" name="voto" value="me_gusta">Me gusta</button>
+        </form>
+        </li>
+        {% endfor %}
+    {% else %}
+        <p>No hay canciones disponibles</p>
+    </ul>
+    {% endif %}
+
+
+
+
+
+
+
+
+
+
+
+    {% with messages = get_flashed_messages() %}
+    {% if messages %}
+        <ul>
+            {% for message in messages %}
+                <li>{{ message }}</li>
+            {% endfor %}
+        </ul>
+    {% endif %}
+    {% endwith %}
+
+
+    <script src="https://cdn.socket.io/4.0.1/socket.io.min.js" defer></script>
+    <script src="{{ url_for('static', filename='js/script.js') }}" defer></script>
+    
+</body>
+</html>

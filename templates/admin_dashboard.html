@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel de Administración</title>
+</head>
+<body>
+    <h1>Panel de Administración</h1>
+    <form method="POST" action="/resetear">
+        <button type="submit">Reiniciar Votación</button>
+    </form>
+
+    <h3>Votaciones actuales:</h3>
+    <ul>
+        {% for cancion, votos in canciones_votos.items() %}
+        <li>{{ cancion }} - Me gusta: {{ votos.me_gusta }} | No me gusta: {{ votos.no_me_gusta }}</li>
+        {% endfor %}
+    </ul>
+
+    <a href="{{ url_for('home') }}">Volver</a>
+</body>
+</html>
+
